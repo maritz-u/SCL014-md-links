@@ -1,16 +1,19 @@
-const mdLinks = require("../index");
+const mdLinks = require("../md-links");
+const assert = require("assert");
 
 describe("mdLinks", () => {
   it("registrar todos los enlaces", () => {
-    mdLinks("./some/example.md")
+    mdLinks("./test/resources/test-markdown.md")
       .then((links) => {
-        // => [{ href, text, file }]
+        assert(links[0].hasOwnProperty("href"));
+        assert(links[0].hasOwnProperty("text"));
+        assert(links[0].hasOwnProperty("file"));
       })
       .catch(console.error);
   });
 
   it("validar los archivos si la flag validate es true", () => {
-    mdLinks("./some/example.md", { validate: true })
+    mdLinks("./test/resources/test-markdown", { validate: true })
       .then((links) => {
         // => [{ href, text, file, status, ok }]
       })
@@ -18,9 +21,11 @@ describe("mdLinks", () => {
   });
 
   it("registrar todos los enlaces de los ficheros MD en una carpeta", () => {
-    mdLinks("./some/dir")
+    mdLinks("./test/resources/")
       .then((links) => {
-        // => [{ href, text, file }]
+        assert(links[0].hasOwnProperty("href"));
+        assert(links[0].hasOwnProperty("text"));
+        assert(links[0].hasOwnProperty("file"));
       })
       .catch(console.error);
   });
