@@ -2,46 +2,59 @@ const path = require("path");
 const fs = require("fs");
 const regexp = /\[([\w\s\d\.]+)\]\(([\w\d\.\/:]+)\)/g;
 
-const procesarPath = (path) => {
-  if (!fs.existsSync(path)) {
+const procesarRuta = (ruta) => {
+  if (!fs.existsSync(ruta)) {
     console.error("No se encuentra!");
     return;
   }
 
-  const stats = fs.lstatSync(path);
+  const stats = fs.lstatSync(ruta);
 
   if(stats.isDirectory()) {
-
+    return new Promise((resolve, reject) => {
+      const resultados = [];
+      fs.readdir(ruta, (err, archivos) => {
+        for(let archivo of archivos) {
+          if(path.extname(archivo) === ".md") {
+            leerArchivo(archivo).then((enlaces) => {
+              resultados.push(enlaces);
+            });
+          }
+        }
+      });
+      resolve(resultados);
+    });
   } else if (stats.isFile()) {
-    leerArchivo(path);
+    return leerArchivo(ruta);
+  } else {
+    console.error("Solo se reconocen directorios o archivos")
   }
-
-  console.error("Solo se reconocen directorios o archivos")
-  return;
 };
 
-const leerArchivo = (path) => {
-  fs.readFile(path, "utf8", (err, data) => procesarTexto(data, path));
+const leerArchivo = (ruta) => {
+  return new Promise((resolve, reject) => {
+    fs.readFile(ruta, "utf8", (err, data) => {
+      resolve(procesarTexto(data, ruta))
+    });
+  });
 }
 
-const procesarTexto = (data, path) => {
+const procesarTexto = (data, ruta) => {
     let coincidencia;
     const resultados = [];
     while ((coincidencia = regexp.exec(data)) !== null) {
       resultados.push({
         href: coincidencia[2],
         text: coincidencia[1],
-        file: path,
+        file: ruta,
       });
     }
-    console.log(resultados);
+
+    return resultados;
 };
 
-procesarPath(process.argv[2]);
+procesarRuta(process.argv[2]).then((result) => console.log(result));
 
 exports.modules = {
-  mdLinks: (path, opts) =>
-    new Promise((resolve, reject) => {
-      resolve(llamadoDeRuta(procesarPath(path)));
-    }),
+  mdLinks: (ruta, opts) => procesarRuta(ruta)
 };
